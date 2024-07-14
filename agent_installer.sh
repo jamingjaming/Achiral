@@ -18,14 +18,7 @@ if [ "$EUID" -ne 0 ]; then
     error_exit "This script must be run as root"
 fi
 
-# Load MySQL credentials from config file
-if [ ! -f ./mysql_config.cnf ]; then
-    error_exit "MySQL configuration file (mysql_config.cnf) not found!"
-fi
-
-source ./mysql_config.cnf
-
-log "Starting Apache CloudStack Management Server installation on CentOS 7"
+log "Starting Apache CloudStack Agent installation on CentOS 7"
 
 # Update the system
 log "Updating system packages"
@@ -55,53 +48,46 @@ firewall-cmd --permanent --add-port=9090/tcp || error_exit "Failed to open port 
 firewall-cmd --permanent --add-port=8000/tcp || error_exit "Failed to open port 8000" # For agent communication
 firewall-cmd --reload || error_exit "Failed to reload firewall rules"
 
-# Install MySQL server
-log "Installing MySQL server"
-yum install -y mysql-server || error_exit "Failed to install MySQL server"
+# Install CloudStack agent
+log "Installing CloudStack agent"
+yum install -y cloudstack-agent || error_exit "Failed to install CloudStack agent"
 
-# Start MySQL service and enable it to start on boot
-log "Starting and enabling MySQL service"
-systemctl start mysqld || error_exit "Failed to start MySQL service"
-systemctl enable mysqld || error_exit "Failed to enable MySQL service"
-
-# Secure MySQL installation
-log "Securing MySQL installation"
-mysql_secure_installation || error_exit "Failed to secure MySQL installation"
-
-# Create CloudStack database and user
-log "Creating CloudStack database and user"
-mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<EOF || error_exit "Failed to create CloudStack database and user"
-CREATE DATABASE cloud;
-CREATE USER 'cloud'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
-GRANT ALL PRIVILEGES ON cloud.* TO 'cloud'@'%';
-FLUSH PRIVILEGES;
+# Configure CloudStack agent
+log "Configuring CloudStack agent"
+cat <<EOF > /etc/cloudstack/agent/agent.properties
+agent.libvirt.host=localhost
+agent.libvirt.type=kvm
+agent.libvirt.port=16509
+agent.libvirt.conn.protocol=qemu+tcp
+agent.libvirt.conn.uri=qemu+tcp://localhost/system
+agent.direct.host=true
+agent.zone=<your_zone>
+agent.pod=<your_pod>
+agent.cluster=<your_cluster>
+agent.host.ip=<agent_server_ip>
+agent.private.interface=cloudbr0
+agent.private.ip=<agent_server_ip>
+agent.public.interface=eth0
+agent.public.ip=<agent_server_ip>
+management.server.ip=<management_server_ip>
 EOF
 
-# Add CloudStack repository
-log "Adding CloudStack repository"
-cat <<EOF > /etc/yum.repos.d/cloudstack.repo
-[cloudstack]
-name=cloudstack
-baseurl=http://download.cloudstack.org/centos/\$releasever/4.19/
-enabled=1
-gpgcheck=0
-EOF
+# Restart CloudStack agent
+log "Restarting CloudStack agent"
+systemctl restart cloudstack-agent || error_exit "Failed to restart CloudStack agent"
 
-# Install CloudStack management server
-log "Installing CloudStack management server"
-yum install -y cloudstack-management || error_exit "Failed to install CloudStack management server"
+# Enable CloudStack agent to start on boot
+log "Enabling CloudStack agent to start on boot"
+systemctl enable cloudstack-agent || error_exit "Failed to enable CloudStack agent to start on boot"
 
-# Initialize the database
-log "Initializing CloudStack database"
-/usr/bin/cloudstack-setup-databases cloud:"$MYSQL_PASSWORD"@localhost --deploy-as=root -p"$MYSQL_ROOT_PASSWORD" || error_exit "Failed to initialize CloudStack database"
+# Create cloud bridge network
+log "Creating cloud bridge network"
+nmcli connection add type bridge autoconnect yes con-name cloudbr0 ifname cloudbr0 || error_exit "Failed to create cloud bridge network"
+nmcli connection modify cloudbr0 bridge.stp no || error_exit "Failed to modify cloud bridge network"
 
-# Configure and start CloudStack management server
-log "Configuring and starting CloudStack management server"
-/usr/bin/cloudstack-setup-management || error_exit "Failed to configure and start CloudStack management server"
+# Restart network services
+log "Restarting network services"
+systemctl restart network || error_exit "Failed to restart network services"
 
-# Enable CloudStack management server to start on boot
-log "Enabling CloudStack management server to start on boot"
-systemctl enable cloudstack-management || error_exit "Failed to enable CloudStack management server to start on boot"
-
-log "Apache CloudStack Management Server installation completed successfully"
-log "You can access the CloudStack UI at http://<your_management_server_ip>:8080/client"
+log "Apache CloudStack Agent installation completed successfully"
+log "Agent server should now communicate with the management server at <management_server_ip>"
