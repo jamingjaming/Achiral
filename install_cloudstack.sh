@@ -46,6 +46,10 @@ EOF
 # Making NFS shares
 mkdir -p /export/primary
 mkdir /export/secondary
+systemctl enable rpcbind || error_exit "Failed to enable RPC"
+systemctl enable nfs || error_exit "Failed to enable NFS"
+systemctl start rpcbind || error_exit "Failed to start RPC"
+systemctl start nfs || error_exit "Failed to start NFS"
 
 # Configure firewall
 systemctl start firewalld || error_exit "Failed to start firewalld"
