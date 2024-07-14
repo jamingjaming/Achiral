@@ -33,11 +33,19 @@ yum update -y || error_exit "Failed to update system packages"
 yum install -y epel-release || error_exit "Failed to install EPEL repository"
 
 # Install necessary packages
-yum install -y wget net-tools chrony || error_exit "Failed to install necessary packages"
+yum install -y wget net-tools chrony nfs-utils || error_exit "Failed to install necessary packages"
 
 # Set SELinux to permissive mode
 setenforce 0 || error_exit "Failed to set SELinux to permissive mode"
 sed -i 's/^SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config || error_exit "Failed to update SELinux configuration"
+
+cat <<EOF > /etc/exports
+/export/secondary *(rw,async,no_root_squash,no_subtree_check)
+/export/primary *(rw,async,no_root_squash,no_subtree_check)
+EOF
+# Making NFS shares
+mkdir -p /export/primary
+mkdir /export/secondary
 
 # Configure firewall
 systemctl start firewalld || error_exit "Failed to start firewalld"
