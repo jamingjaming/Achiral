@@ -1,12 +1,12 @@
 user=root
-password='YOUR_ROOT_PASSWORD'
+password=''
 
 user=mysql
 datadir=/var/lib/mysql
 socket=/var/lib/mysql/mysql.sock
 
 user=root
-password='YOUR_ROOT_PASSWORD'
+password=''
 
 user=root
-password='YOUR_ROOT_PASSWORD'
+password=''
