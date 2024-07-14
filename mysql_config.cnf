@@ -1,2 +1,16 @@
-# MySQL Configuration
-MYSQL_PASSWORD='****'
+[client]
+user=root
+password=YOUR_ROOT_PASSWORD
+
+[mysqld]
+user=mysql
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+
+[mysql]
+user=root
+password=YOUR_ROOT_PASSWORD
+
+[mysqladmin]
+user=root
+password=YOUR_ROOT_PASSWORD
