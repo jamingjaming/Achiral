@@ -93,7 +93,7 @@ yum install -y cloudstack-management || error_exit "Failed to install CloudStack
 
 # Initialize the database
 log "Initializing CloudStack database"
-/usr/bin/cloudstack-setup-databases cloud:"$MYSQL_PASSWORD"@localhost --deploy-as=root -p"$MYSQL_ROOT_PASSWORD" || error_exit "Failed to initialize CloudStack database"
+/usr/bin/cloudstack-setup-databases cloud:"$MYSQL_PASSWORD"@localhost --deploy-as=root:"$MYSQL_ROOT_PASSWORD" || error_exit "Failed to initialize CloudStack database"
 
 # Configure and start CloudStack management server
 log "Configuring and starting CloudStack management server"
