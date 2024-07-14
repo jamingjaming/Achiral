@@ -39,10 +39,15 @@ log "Setting SELinux to permissive mode"
 setenforce 0 || error_exit "Failed to set SELinux to permissive mode"
 sed -i 's/^SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config || error_exit "Failed to update SELinux configuration"
 
-# Disable firewalld
-log "Disabling firewalld"
-systemctl stop firewalld || error_exit "Failed to stop firewalld"
-systemctl disable firewalld || error_exit "Failed to disable firewalld"
+# Configure firewall
+log "Configuring firewall"
+systemctl start firewalld || error_exit "Failed to start firewalld"
+systemctl enable firewalld || error_exit "Failed to enable firewalld"
+firewall-cmd --permanent --add-port=3306/tcp || error_exit "Failed to open port 3306"
+firewall-cmd --permanent --add-port=8080/tcp || error_exit "Failed to open port 8080"
+firewall-cmd --permanent --add-port=8250/tcp || error_exit "Failed to open port 8250"
+firewall-cmd --permanent --add-port=9090/tcp || error_exit "Failed to open port 9090"
+firewall-cmd --reload || error_exit "Failed to reload firewall rules"
 
 # Install MySQL server
 log "Installing MySQL server"
