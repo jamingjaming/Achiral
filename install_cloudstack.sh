@@ -68,15 +68,6 @@ systemctl enable mysqld || error_exit "Failed to enable MySQL service"
 log "Securing MySQL installation"
 mysql_secure_installation || error_exit "Failed to secure MySQL installation"
 
-# Create CloudStack database and user
-log "Creating CloudStack database and user"
-mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<EOF || error_exit "Failed to create CloudStack database and user"
-CREATE DATABASE cloud;
-CREATE USER 'cloud'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
-GRANT ALL PRIVILEGES ON cloud.* TO 'cloud'@'%';
-FLUSH PRIVILEGES;
-EOF
-
 # Add CloudStack repository
 log "Adding CloudStack repository"
 cat <<EOF > /etc/yum.repos.d/cloudstack.repo
