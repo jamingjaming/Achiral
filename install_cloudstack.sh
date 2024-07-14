@@ -13,6 +13,11 @@ function error_exit() {
     exit 1
 }
 
+# Ensure the script is being run as root
+if [ "$EUID" -ne 0 ]; then
+    error_exit "This script must be run as root"
+fi
+
 # Load MySQL credentials from config file
 if [ ! -f ./mysql_config.cnf ]; then
     error_exit "MySQL configuration file (mysql_config.cnf) not found!"
@@ -20,7 +25,7 @@ fi
 
 source ./mysql_config.cnf
 
-log "Starting Apache CloudStack installation on CentOS 7"
+log "Starting Apache CloudStack Management Server installation on CentOS 7"
 
 # Update the system
 log "Updating system packages"
@@ -47,6 +52,7 @@ firewall-cmd --permanent --add-port=3306/tcp || error_exit "Failed to open port 
 firewall-cmd --permanent --add-port=8080/tcp || error_exit "Failed to open port 8080"
 firewall-cmd --permanent --add-port=8250/tcp || error_exit "Failed to open port 8250"
 firewall-cmd --permanent --add-port=9090/tcp || error_exit "Failed to open port 9090"
+firewall-cmd --permanent --add-port=8000/tcp || error_exit "Failed to open port 8000" # For agent communication
 firewall-cmd --reload || error_exit "Failed to reload firewall rules"
 
 # Install MySQL server
@@ -64,10 +70,10 @@ mysql_secure_installation || error_exit "Failed to secure MySQL installation"
 
 # Create CloudStack database and user
 log "Creating CloudStack database and user"
-mysql -u root -p <<EOF || error_exit "Failed to create CloudStack database and user"
+mysql -u root -p"$MYSQL_ROOT_PASSWORD" <<EOF || error_exit "Failed to create CloudStack database and user"
 CREATE DATABASE cloud;
-CREATE USER 'cloud'@'localhost' IDENTIFIED BY '$MYSQL_PASSWORD';
-GRANT ALL PRIVILEGES ON cloud.* TO 'cloud'@'localhost';
+CREATE USER 'cloud'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
+GRANT ALL PRIVILEGES ON cloud.* TO 'cloud'@'%';
 FLUSH PRIVILEGES;
 EOF
 
@@ -87,24 +93,15 @@ yum install -y cloudstack-management || error_exit "Failed to install CloudStack
 
 # Initialize the database
 log "Initializing CloudStack database"
-/usr/bin/cloudstack-setup-databases cloud:$MYSQL_PASSWORD@localhost --deploy-as=root || error_exit "Failed to initialize CloudStack database"
+/usr/bin/cloudstack-setup-databases cloud:"$MYSQL_PASSWORD"@localhost --deploy-as=root || error_exit "Failed to initialize CloudStack database"
 
 # Configure and start CloudStack management server
 log "Configuring and starting CloudStack management server"
 /usr/bin/cloudstack-setup-management || error_exit "Failed to configure and start CloudStack management server"
 
-# Create cloud bridge network
-log "Creating cloud bridge network"
-nmcli connection add type bridge autoconnect yes con-name cloudbr0 ifname cloudbr0 || error_exit "Failed to create cloud bridge network"
-nmcli connection modify cloudbr0 bridge.stp no || error_exit "Failed to modify cloud bridge network"
-
-# Restart network services
-log "Restarting network services"
-systemctl restart network || error_exit "Failed to restart network services"
-
 # Enable CloudStack management server to start on boot
 log "Enabling CloudStack management server to start on boot"
 systemctl enable cloudstack-management || error_exit "Failed to enable CloudStack management server to start on boot"
 
-log "Apache CloudStack installation completed successfully"
-log "You can access the CloudStack UI at http://<your_server_ip>:8080/client"
+log "Apache CloudStack Management Server installation completed successfully"
+log "You can access the CloudStack UI at http://<your_management_server_ip>:8080/client"
