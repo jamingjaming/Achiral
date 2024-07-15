@@ -112,7 +112,7 @@ nmcli connection modify cloudbr0 bridge.stp no || error_exit "Failed to modify c
 
 # Restart network services
 log "Restarting network services"
-systemctl restart network || error_exit "Failed to restart network services"
+systemctl restart NetworkManager || error_exit "Failed to restart network services"
 
 log "Apache CloudStack Agent and Apache installation completed successfully"
 log "Agent server should now communicate with the management server at $management_server_ip"
