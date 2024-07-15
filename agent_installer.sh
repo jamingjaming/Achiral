@@ -64,7 +64,14 @@ yum install -y httpd || error_exit "Failed to install Apache Agent"
 systemctl start httpd || error_exit "Failed to start Apache Agent"
 systemctl enable httpd || error_exit "Failed to enable Apache Agent to start on boot"
 
-
+# Add CloudStack repository
+cat <<EOF > /etc/yum.repos.d/cloudstack.repo
+[cloudstack]
+name=cloudstack
+baseurl=http://download.cloudstack.org/centos/\$releasever/4.19/
+enabled=1
+gpgcheck=0
+EOF
 
 # Install CloudStack agent
 log "Installing CloudStack agent"
