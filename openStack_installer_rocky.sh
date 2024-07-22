@@ -72,7 +72,7 @@ sudo keystone-manage bootstrap --bootstrap-password ADMIN_PASS \
 
 # Configure Apache HTTP Server
 sudo cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.bak
-sudo echo "ServerName controller" >> /etc/httpd/conf/httpd.conf
+echo "ServerName controller" | sudo tee -a /etc/httpd/conf/httpd.conf
 sudo ln -s /usr/share/keystone/wsgi-keystone.conf /etc/httpd/conf.d/
 sudo systemctl enable httpd.service
 sudo systemctl start httpd.service
