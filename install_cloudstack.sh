@@ -44,7 +44,7 @@ sed -i 's/^SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config || error_e
 log "SELinux set to permissive mode"
 
 log "Configuring NFSv4 domain setting"
-sed -i 's/^#Domain =.*/Domain = cloud.priv/' /etc/idmapd.conf || error_exit "Failed to set NFSv4 domain in /etc/idmapd.conf"
+sed -i 's/^#Domain =.*/Domain = storage.dedi.cloud/' /etc/idmapd.conf || error_exit "Failed to set NFSv4 domain in /etc/idmapd.conf"
 log "NFSv4 domain setting configured"
 
 log "Configuring NFS shares"
@@ -115,3 +115,11 @@ log "CloudStack management server enabled to start on boot"
 
 log "Apache CloudStack Management Server installation completed successfully"
 log "You can access the CloudStack UI at http://<your_management_server_ip>:8080/client"
+
+# Ensure NFS shares are accessible and mountable
+log "Testing NFS shares"
+showmount -e localhost || error_exit "Failed to show NFS shares"
+mount -t nfs localhost:/export/primary /mnt || error_exit "Failed to mount NFS share"
+umount /mnt
+log "NFS shares are accessible and mountable"
+
