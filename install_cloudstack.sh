@@ -59,6 +59,14 @@ systemctl enable rpcbind || error_exit "Failed to enable RPC"
 systemctl enable nfs-server || error_exit "Failed to enable NFS"
 systemctl start rpcbind || error_exit "Failed to start RPC"
 systemctl start nfs-server || error_exit "Failed to start NFS"
+
+# Ensure NFS shares are accessible and mountable
+log "Testing NFS shares"
+showmount -e localhost || error_exit "Failed to show NFS shares"
+mount -t nfs localhost:/export/primary /mnt || error_exit "Failed to mount NFS share"
+umount /mnt
+log "NFS shares are accessible and mountable"
+
 log "NFS shares configured"
 
 log "Configuring firewall"
@@ -116,10 +124,4 @@ log "CloudStack management server enabled to start on boot"
 log "Apache CloudStack Management Server installation completed successfully"
 log "You can access the CloudStack UI at http://<your_management_server_ip>:8080/client"
 
-# Ensure NFS shares are accessible and mountable
-log "Testing NFS shares"
-showmount -e localhost || error_exit "Failed to show NFS shares"
-mount -t nfs localhost:/export/primary /mnt || error_exit "Failed to mount NFS share"
-umount /mnt
-log "NFS shares are accessible and mountable"
 
