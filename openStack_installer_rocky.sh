@@ -44,6 +44,7 @@ sudo systemctl start memcached.service | tee -a openstack_install.log
 # Step 4: Configure MariaDB
 log "Configuring MariaDB..."
 sudo mysql_secure_installation <<EOF | tee -a openstack_install.log
+
 y
 password
 password
@@ -69,7 +70,7 @@ sudo dnf install -y openstack-keystone httpd mod_wsgi | tee -a openstack_install
 # Configure Keystone
 sudo cp /etc/keystone/keystone.conf /etc/keystone/keystone.conf.bak | tee -a openstack_install.log
 sudo sed -i "s/#admin_token = <None>/admin_token = ADMIN_TOKEN/" /etc/keystone/keystone.conf | tee -a openstack_install.log
-sudo sed -i "s/sqlite:\/\/\/\/var\/lib\/keystone\/keystone.db/mysql+pymysql:\/\/keystone:KEYSTONE_DBPASS@controller\/keystone/" /etc/keystone/keystone.conf | tee -a openstack_install.log
+sudo sed -i "s|sqlite:////var/lib/keystone/keystone.db|mysql+pymysql://keystone:KEYSTONE_DBPASS@controller/keystone|" /etc/keystone/keystone.conf | tee -a openstack_install.log
 sudo keystone-manage db_sync | tee -a openstack_install.log
 
 # Bootstrap Keystone
@@ -108,7 +109,7 @@ sudo dnf install -y openstack-glance | tee -a openstack_install.log
 
 # Configure Glance
 sudo cp /etc/glance/glance-api.conf /etc/glance/glance-api.conf.bak | tee -a openstack_install.log
-sudo sed -i "s/sqlite:\/\/\/\/var\/lib\/glance\/glance.sqlite/mysql+pymysql:\/\/glance:GLANCE_DBPASS@controller\/glance/" /etc/glance/glance-api.conf | tee -a openstack_install.log
+sudo sed -i "s|sqlite:////var/lib/glance/glance.sqlite|mysql+pymysql://glance:GLANCE_DBPASS@controller/glance|" /etc/glance/glance-api.conf | tee -a openstack_install.log
 sudo glance-manage db_sync | tee -a openstack_install.log
 
 # Create Glance service and endpoints
@@ -126,7 +127,7 @@ sudo dnf install -y openstack-placement-api | tee -a openstack_install.log
 
 # Configure Placement
 sudo cp /etc/placement/placement.conf /etc/placement/placement.conf.bak | tee -a openstack_install.log
-sudo sed -i "s/connection = <None>/connection = mysql+pymysql:\/\/placement:PLACEMENT_DBPASS@controller\/placement/" /etc/placement/placement.conf | tee -a openstack_install.log
+sudo sed -i "s|connection = <None>|connection = mysql+pymysql://placement:PLACEMENT_DBPASS@controller/placement|" /etc/placement/placement.conf | tee -a openstack_install.log
 sudo placement-manage db sync | tee -a openstack_install.log
 
 # Create Placement service and endpoints
