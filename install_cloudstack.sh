@@ -1,5 +1,7 @@
-#!/bin/bash
 
+
+#!/bin/bash
+###############this script is for deployment on centos based distros, and sets the controller as the primary storage node.
 set -e
 
 # Function to print a message with a timestamp
